@@ -1,0 +1,3 @@
+[submodule "padawan.php"]
+	path = padawan.php
+	url = https://github.com/mkusher/padawan.php.git
