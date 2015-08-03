@@ -1,3 +1,3 @@
 if g:padawan#enabled
-    "setlocal omnifunc=padawan#Complete
+    setlocal omnifunc=padawan#Complete
 endif

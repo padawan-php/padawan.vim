@@ -2,10 +2,10 @@
 " Language: PHP
 " Maintainer:     Aleh Kashnikau ( aleh.kashnikau AT gmail DOT com )
 
-"if exists('did_padawan_autoload')
-    "finish
-"endif
-"let did_padawan_autoload = 1
+if exists('did_padawan_autoload')
+    finish
+endif
+let did_padawan_autoload = 1
 
 let g:padawan#composer_command = 'composer'
 let g:padawan#server_path = expand('<sfile>:p:h:h') . '/padawan.php'
@@ -16,6 +16,7 @@ python << EOF
 import vim
 from os import path
 import urllib2
+import httplib
 import urllib
 import json
 import codecs
@@ -30,12 +31,9 @@ composer = vim.eval('g:padawan#composer_command')
 
 
 class PadawanClient:
-    is_server_started = False
     server_process = 0
 
     def GetCompletion(self, filepath, line_num, column_num, contents):
-        if not self.is_server_started:
-            return {"completion": []}
         curPath = self.GetProjectRoot(filepath)
 
         params = {
@@ -45,15 +43,13 @@ class PadawanClient:
             'path': curPath
         }
         result = self.DoRequest('complete', params, contents)
+
         if not result:
             return {"completion": []}
 
         return result
 
     def SaveIndex(self, filepath):
-        if not self.is_server_started:
-            return False
-
         return self.DoRequest('save', {'filepath': filepath})
 
     def DoRequest(self, command, params, data=''):
@@ -68,30 +64,25 @@ class PadawanClient:
             if "error" in completions:
                 raise ValueError(completions["error"])
             return completions
+        except urllib2.URLError:
+            vim.command('echo "Padawan.php is not running"')
         except Exception as e:
             vim.command('echom "Error occured {0}"'.format(e))
 
         return False
 
     def StartServer(self):
-        if self.is_server_started:
-            return False
-
-        command = '{0}/bin/server.php > {0}/app/logs/server.log'.format(server_path)
+        command = '{0}/bin/server.php > {0}/../logs/server.log'.format(server_path)
+        vim.command('echo "{0}"'.format(command))
         self.server_process = subprocess.Popen(
             command,
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
         )
-        self.is_server_started = True
 
     def StopServer(self):
-        if not self.is_server_started:
-            return False
-
         self.server_process.kill()
-        self.is_server_started = False
 
     def Generate(self, filepath):
         curPath = self.GetProjectRoot(filepath)
