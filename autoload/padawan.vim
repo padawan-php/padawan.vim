@@ -73,7 +73,6 @@ class PadawanClient:
 
     def StartServer(self):
         command = '{0}/bin/server.php > {0}/../logs/server.log'.format(server_path)
-        vim.command('echo "{0}"'.format(command))
         self.server_process = subprocess.Popen(
             command,
             shell=True,
