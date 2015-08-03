@@ -5,8 +5,7 @@ Padawan.vim is a vim plugin for [padawan.php server
 ](https://github.com/mkusher/padawan.php).
 
 This plugin includes:
-- Omnifunc(it is terrible, I'm using [this YCMD client
-](https://gist.github.com/mkusher/43bcff85d5e2f3ec3c55) instead)
+- Omnifunc
 - Index generation and saving commands
 - Server manipulating commands(start, stop, restart)
 
@@ -17,6 +16,7 @@ You should have:
 
 1. PHP 5.4+
 2. Composer(accesible via `composer` command in bash)
+3. Vim with +python
 
 Installation
 ------------
@@ -49,6 +49,21 @@ cd path/to/padawan.vim
 cd padawan.php
 php composer.phar install
 ```
+
+Usage
+-----
+
+Open your php project that uses composer and then run
+```
+:call padawan#GenerateIndex()
+```
+
+It can take a while. You should generate index manually for each of your
+project only one time. After it start server with
+```
+:call padawan#StartServer()
+```
+And that's all!
 
 Vim functions
 -------------
