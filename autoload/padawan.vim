@@ -114,6 +114,12 @@ class PadawanClient:
 
             vim.command("redraw | echo 'Progress "+barsStr+' '+str(progress)+"%'")
             time.sleep(0.005)
+        time.sleep(0.005)
+        barsStr = ''
+        for i in range(20):
+            barsStr += '='
+        barsStr = '[' + barsStr + ']'
+        vim.command("redraw | echo 'Progress "+barsStr+" 100%'")
         vim.command("echom 'Index generated'")
 
     def ComposerDumpAutoload(self, curProject):
