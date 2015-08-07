@@ -9,6 +9,14 @@ This plugin includes:
 - Index generation and saving commands
 - Server manipulating commands(start, stop, restart)
 
+### Demo video
+
+Currently it has basic completion for classes and methods based on doc comments
+and methods signature.
+
+Watch this short video to see what it can already do(image is clickable)
+[![ScreenShot](http://i1.ytimg.com/vi/Y54P2N1T6-I/maxresdefault.jpg)](https://www.youtube.com/watch?v=Y54P2N1T6-I)
+
 Requirements
 ------------
 
