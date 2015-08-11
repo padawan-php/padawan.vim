@@ -7,10 +7,21 @@ if exists('did_padawan_autoload')
 endif
 let did_padawan_autoload = 1
 
-let g:padawan#composer_command = 'composer'
-let g:padawan#server_path = expand('<sfile>:p:h:h') . '/padawan.php'
-let g:padawan#server_addr = 'http://localhost:15155'
-let g:padawan#enabled = 1
+if !exists('g:padawan#composer_command')
+    let g:padawan#composer_command = 'composer'
+endif
+if !exists('g:padawan#server_path')
+    let g:padawan#server_path = expand('<sfile>:p:h:h') . '/padawan.php'
+endif
+if !exists('g:padawan#server_addr')
+    let g:padawan#server_addr = 'http://localhost:15155'
+endif
+if !exists('g:padawan#enabled')
+    let g:padawan#enabled = 1
+endif
+if !exists('g:padawan#timeout')
+    let g:padawan#timeout = 0.1
+endif
 
 python << EOF
 import vim
@@ -28,6 +39,7 @@ import re
 server_addr = vim.eval('g:padawan#server_addr')
 server_path = vim.eval('g:padawan#server_path')
 composer = vim.eval('g:padawan#composer_command')
+timeout = float(vim.eval('g:padawan#timeout'))
 
 
 class PadawanClient:
@@ -58,7 +70,7 @@ class PadawanClient:
             response = urllib2.urlopen(
                 addr,
                 urllib.quote_plus(data),
-                0.07
+                timeout
             )
             completions = json.load(response)
             if "error" in completions:
@@ -83,6 +95,17 @@ class PadawanClient:
     def StopServer(self):
         self.server_process.kill()
 
+    def AddPlugin(self, plugin):
+        curPath = self.GetProjectRoot(filepath)
+        self.ComposerDumpAutoload(curPath)
+        generatorCommand = server_path + '/bin/cli'
+
+        stream = subprocess.Popen(
+            'cd ' + curPath + ' && ' + generatorCommand + ' plugin add ' + plugin,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+        )
     def Generate(self, filepath):
         curPath = self.GetProjectRoot(filepath)
         self.ComposerDumpAutoload(curPath)
