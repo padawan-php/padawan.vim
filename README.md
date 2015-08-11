@@ -36,12 +36,12 @@ vundle, neobundle and plug.
 
 To install it via pathogen do the following steps:
 ```bash
-cd TO YOUR PLUGINS FOLDER
-git clone https://github.com/mkusher/padawan.vim.git
-cd padawan.vim
-git submodule update --init --recursive
-cd padawan.php
-php composer.phar install
+$ cd TO YOUR PLUGINS FOLDER
+$ git clone https://github.com/mkusher/padawan.vim.git
+$ cd padawan.vim
+$ git submodule update --init --recursive
+$ cd padawan.php
+$ php composer.phar install
 ```
 
 ### Plug
@@ -53,24 +53,27 @@ Plug 'mkusher/padawan.vim'
 After `source %` and `:PlugInstall` go to the padawan.vim directory and do:
 
 ```bash
-cd path/to/padawan.vim
-cd padawan.php
-php composer.phar install
+$ cd path/to/padawan.vim
+$ cd padawan.php
+$ php composer.phar install
 ```
 
-Usage
------
+How to use
+==========
 
-Open your php project that uses composer and then run
-```
+- Run index generation command in your php composer
+project folder using this vim command:
+```vim
 :call padawan#GenerateIndex()
 ```
+- Start padawan's server with:
+```vim
+:call padawan#StartServer()
+```
+- Enjoy smart completion
 
 It can take a while. You should generate index manually for each of your
 project only one time. After it start server with
-```
-:call padawan#StartServer()
-```
 And that's all!
 
 Vim functions
