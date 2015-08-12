@@ -147,7 +147,8 @@ class PadawanClient:
 
     def ComposerDumpAutoload(self, curProject):
         composerCommand = composer + ' dumpautoload -o'
-        subprocess.call('cd {0} && {1}'.format(curProject, composerCommand), shell=True)
+        stream = subprocess.Popen('cd {0} && {1}'.format(curProject, composerCommand), shell=True)
+        stream.wait()
 
     def GetProjectRoot(self, filepath):
         curPath = path.dirname(filepath)
