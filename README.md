@@ -49,14 +49,6 @@ Add this to your vimrc
 Plug 'mkusher/padawan.vim', { 'do': './install.sh' }
 ```
 
-After `source %` and `:PlugInstall` go to the padawan.vim directory and do:
-
-```bash
-$ cd path/to/padawan.vim
-$ cd padawan.php
-$ php composer.phar install
-```
-
 How to use
 ==========
 
