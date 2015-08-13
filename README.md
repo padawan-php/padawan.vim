@@ -40,14 +40,13 @@ $ cd TO YOUR PLUGINS FOLDER
 $ git clone https://github.com/mkusher/padawan.vim.git
 $ cd padawan.vim
 $ git submodule update --init --recursive
-$ cd padawan.php
-$ php composer.phar install
+$ sh install.sh
 ```
 
 ### Plug
 Add this to your vimrc
 ```vim
-Plug 'mkusher/padawan.vim'
+Plug 'mkusher/padawan.vim', { 'do': './install.sh' }
 ```
 
 After `source %` and `:PlugInstall` go to the padawan.vim directory and do:
@@ -75,6 +74,42 @@ project folder using this vim command:
 It can take a while. You should generate index manually for each of your
 project only one time. After it start server with
 And that's all!
+
+Configuring
+-----------
+
+You may want to change composer to the one installed in your system.
+You can do it using:
+```vim
+let g:padawan#composer_command = 'php /usr/bin/composer.phar'
+```
+Another option you may want to change is http request timeout.
+You can do it using
+```vim
+let g:padawan#timeout = 0.1
+```
+It will set timeout to 100 ms.
+
+Autocomplet engines
+-------------------
+
+### YouCompleteMe
+
+You should set semantic triggers like
+```vim
+let g:ycm_semantic_triggers = {}
+let g:ycm_semantic_triggers.php =
+\ ['->', '::', '(', 'use ', 'namespace ', '\']
+```
+
+### Neocomplete
+
+You should set omni input patterns like
+```vim
+let g:neocomplete#force_omni_input_patterns = {}
+let g:neocomplete#force_omni_input_patterns.php =
+\ '\h\w*\|[^- \t]->\w*'
+```
 
 Vim functions
 -------------
