@@ -82,10 +82,10 @@ let g:padawan#timeout = 0.1
 ```
 It will set timeout to 100 ms.
 
-Autocomplet engines
+Autocomplete engines
 -------------------
 
-### YouCompleteMe
+### [YouCompleteMe](https://github.com/Valloric/YouCompleteMe)
 
 You should set semantic triggers like
 ```vim
@@ -94,7 +94,7 @@ let g:ycm_semantic_triggers.php =
 \ ['->', '::', '(', 'use ', 'namespace ', '\']
 ```
 
-### Neocomplete
+### [Neocomplete](https://github.com/Shougo/neocomplete.vim)
 
 You should set omni input patterns like
 ```vim
