@@ -165,6 +165,13 @@ class PadawanClient:
             if retcode is not None:
                 break
             line = stream.stdout.readline()
+            errorMatch = re.search('Error: (.*)', line)
+            if errorMatch is not None:
+                retcode = 1
+                vim.command("echom '{0}'".format(
+                    errorMatch.group(1).replace("'", "''")
+                ))
+                break
             match = re.search('Progress: ([0-9]+)', line)
             if match is None:
                 continue
@@ -184,6 +191,9 @@ class PadawanClient:
             )
             time.sleep(0.005)
         time.sleep(0.005)
+        if retcode > 0:
+            vim.command("echom 'Error occured, code: " + str(retcode) + "'")
+            return
         self.RestartServer()
         barsStr = ''
         for i in range(20):

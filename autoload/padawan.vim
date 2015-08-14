@@ -21,7 +21,7 @@ if !exists('g:padawan#enabled')
     let g:padawan#enabled = 1
 endif
 if !exists('g:padawan#timeout')
-    let g:padawan#timeout = 0.15
+    let g:padawan#timeout = "0.15"
 endif
 
 python << EOF
