@@ -71,13 +71,14 @@ class PadawanClient:
 
     def StopServer(self):
         try:
-            return self.SendRequest('kill', {})
+            self.SendRequest('kill', {})
+            return True
         except Exception:
             return False
 
     def RestartServer(self):
-        self.StopServer()
-        self.StartServer()
+        if self.StopServer():
+            self.StartServer()
 
     def AddPlugin(self, plugin):
         composerCommand = composer + ' require '
