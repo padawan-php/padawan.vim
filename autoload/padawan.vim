@@ -6,9 +6,10 @@ if exists('did_padawan_autoload')
     finish
 endif
 let did_padawan_autoload = 1
+let padawanPath = expand('<sfile>:p:h:h')
 
 if !exists('g:padawan#composer_command')
-    let g:padawan#composer_command = 'composer'
+    let g:padawan#composer_command = padawanPath . '/composer.phar'
 endif
 if !exists('g:padawan#server_path')
     let g:padawan#server_path = expand('<sfile>:p:h:h') . '/padawan.php'
@@ -20,7 +21,7 @@ if !exists('g:padawan#enabled')
     let g:padawan#enabled = 1
 endif
 if !exists('g:padawan#timeout')
-    let g:padawan#timeout = 0.1
+    let g:padawan#timeout = 0.15
 endif
 
 python << EOF
@@ -40,6 +41,7 @@ server_addr = vim.eval('g:padawan#server_addr')
 server_path = vim.eval('g:padawan#server_path')
 composer = vim.eval('g:padawan#composer_command')
 timeout = float(vim.eval('g:padawan#timeout'))
+padawanPath = vim.eval('padawanPath')
 
 
 class PadawanClient:
@@ -66,16 +68,7 @@ class PadawanClient:
 
     def DoRequest(self, command, params, data=''):
         try:
-            addr = server_addr + "/"+command+"?" + urllib.urlencode(params)
-            response = urllib2.urlopen(
-                addr,
-                urllib.quote_plus(data),
-                timeout
-            )
-            completions = json.load(response)
-            if "error" in completions:
-                raise ValueError(completions["error"])
-            return completions
+            return self.SendRequest(command, params, data)
         except urllib2.URLError:
             vim.command('echo "Padawan.php is not running"')
         except Exception as e:
@@ -83,9 +76,22 @@ class PadawanClient:
 
         return False
 
+    def SendRequest(self, command, params, data=''):
+        addr = server_addr + "/"+command+"?" + urllib.urlencode(params)
+        response = urllib2.urlopen(
+            addr,
+            urllib.quote_plus(data),
+            timeout
+        )
+        completions = json.load(response)
+        if "error" in completions:
+            raise ValueError(completions["error"])
+        return completions
+
+
     def StartServer(self):
         command = '{0}/bin/server.php > {0}/../logs/server.log'.format(server_path)
-        self.server_process = subprocess.Popen(
+        subprocess.Popen(
             command,
             shell=True,
             stdout=subprocess.PIPE,
@@ -93,19 +99,86 @@ class PadawanClient:
         )
 
     def StopServer(self):
-        self.server_process.kill()
+        try:
+            return self.SendRequest('kill', {})
+        except Exception:
+            return False
+
+    def RestartServer(self):
+        self.StopServer()
+        self.StartServer()
 
     def AddPlugin(self, plugin):
-        curPath = self.GetProjectRoot(filepath)
-        self.ComposerDumpAutoload(curPath)
+        composerCommand = composer + ' require '
         generatorCommand = server_path + '/bin/cli'
 
+        command = 'cd {0} && {1} {3} && {2} plugin add {3}'.format(
+            self.PadawanPHPPath(),
+            composerCommand,
+            generatorCommand,
+            plugin
+        )
+
         stream = subprocess.Popen(
-            'cd ' + curPath + ' && ' + generatorCommand + ' plugin add ' + plugin,
+            command,
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
         )
+
+        while True:
+            retcode = stream.poll()
+            if retcode is not None:
+                break
+
+            line = stream.stdout.readline()
+            vim.command("echo '%s'" % line.replace("'", "''"))
+            time.sleep(0.005)
+
+        if not retcode:
+            self.RestartServer()
+            vim.command("echom 'Plugin installed'")
+        else:
+            vim.command("echom 'Plugin installation failed'")
+
+    def RemovePlugin(self, plugin):
+        composerCommand = composer + ' remove'
+        generatorCommand = server_path + '/bin/cli'
+
+        command = 'cd {0} && {1} {2}'.format(
+            self.PadawanPHPPath(),
+            composerCommand,
+            plugin
+        )
+
+        stream = subprocess.Popen(
+            command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+        )
+
+        while True:
+            retcode = stream.poll()
+            if retcode is not None:
+                break
+
+            line = stream.stdout.readline()
+            vim.command("echo '%s'" % line)
+            time.sleep(0.005)
+
+        subprocess.Popen(
+            'cd {0} && {1}'.format(
+                self.PadawanPHPPath(),
+                generatorCommand + ' plugin remove ' + plugin
+            ),
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+        ).wait()
+        self.RestartServer()
+        vim.command("echom 'Plugin removed'")
+
     def Generate(self, filepath):
         curPath = self.GetProjectRoot(filepath)
         self.ComposerDumpAutoload(curPath)
@@ -138,6 +211,7 @@ class PadawanClient:
             vim.command("redraw | echo 'Progress "+barsStr+' '+str(progress)+"%'")
             time.sleep(0.005)
         time.sleep(0.005)
+        self.RestartServer()
         barsStr = ''
         for i in range(20):
             barsStr += '='
@@ -161,6 +235,9 @@ class PadawanClient:
             curPath = path.dirname(filepath)
 
         return curPath
+
+    def PadawanPHPPath(self):
+        return padawanPath + '/padawan.php/'
 
 client = PadawanClient()
 EOF
@@ -239,8 +316,7 @@ endfunction
 
 function! padawan#RestartServer()
 python << EOF
-client.StopServer()
-client.StartServer()
+client.RestartServer()
 EOF
 endfunction
 
@@ -257,3 +333,24 @@ filepath = vim.eval("expand('%:p')")
 client.Generate(filepath)
 endpython
 endfunction
+
+function! padawan#AddPlugin(pluginName)
+python << endpython
+pluginName = vim.eval("a:pluginName")
+client.AddPlugin(pluginName)
+endpython
+endfunction
+
+function! padawan#RemovePlugin(pluginName)
+python << endpython
+pluginName = vim.eval("a:pluginName")
+client.RemovePlugin(pluginName)
+endpython
+endfunction
+
+command! -nargs=0 -bar PadawanStartServer call padawan#StartServer()
+command! -nargs=0 -bar PadawanStopServer call padawan#StopServer()
+command! -nargs=0 -bar PadawanRestartServer call padawan#RestartServer()
+command! -nargs=0 -bar PadawanGenerateIndex call padawan#GenerateIndex()
+command! -nargs=1 -bar PadawanAddPlugin call padawan#AddPlugin("<args>")
+command! -nargs=1 -bar PadawanRemovePlugin call padawan#RemovePlugin("<args>")

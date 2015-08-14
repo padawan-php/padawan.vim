@@ -2,7 +2,8 @@ Padawan.vim
 ===========
 
 Padawan.vim is a vim plugin for [padawan.php server
-](https://github.com/mkusher/padawan.php).
+](https://github.com/mkusher/padawan.php) - smart php intelligent code
+completion server for composer projects.
 
 This plugin includes:
 - Omnifunc
@@ -55,32 +56,16 @@ How to use
 - Run index generation command in your php composer
 project folder using this vim command:
 ```vim
-:call padawan#GenerateIndex()
+:PadawanGenerateIndex
 ```
 - Start padawan's server with:
 ```vim
-:call padawan#StartServer()
+:PadawanStartServer
 ```
 - Enjoy smart completion
 
 It can take a while. You should generate index manually for each of your
-project only one time. After it start server with
-And that's all!
-
-Configuring
------------
-
-You may want to change composer to the one installed in your system.
-You can do it using:
-```vim
-let g:padawan#composer_command = 'php /usr/bin/composer.phar'
-```
-Another option you may want to change is http request timeout.
-You can do it using
-```vim
-let g:padawan#timeout = 0.1
-```
-It will set timeout to 100 ms.
+project only one time.
 
 Autocomplete engines
 -------------------
@@ -102,6 +87,40 @@ let g:neocomplete#force_omni_input_patterns = {}
 let g:neocomplete#force_omni_input_patterns.php =
 \ '\h\w*\|[^- \t]->\w*'
 ```
+
+Plugins(Extensions)
+-------------------
+
+You can extend padawan.php by installing different plugins.
+See [Plugins List](https://github.com/mkusher/padawan.php/wiki/Plugins-list)
+for more info.
+
+### Installing
+To install plugin run `:PadawanAddPlugin PLUGIN_NAME`, for example:
+```vim
+:PadawanAddPlugin mkusher/padawan-symfony
+```
+
+### Removing
+To remove plugin run `:PadawanRemovePlugin PLUGIN_NAME`, for example:
+```vim
+:PadawanRemovePlugin mkusher/padawan-symfony
+```
+
+Configuring
+-----------
+
+You may want to change composer to the one installed in your system.
+You can do it using:
+```vim
+let g:padawan#composer_command = 'php /usr/bin/composer.phar'
+```
+Another option you may want to change is http request timeout.
+You can do it using
+```vim
+let g:padawan#timeout = 0.1
+```
+It will set timeout to 100 ms.
 
 Vim functions
 -------------
