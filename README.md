@@ -24,7 +24,7 @@ Requirements
 Padawan.vim requires:
 
 1. PHP 5.4+
-2. Composer (accesible via `composer` command in bash)
+2. Composer
 3. Vim with +python
 
 Installation
