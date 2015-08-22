@@ -65,6 +65,8 @@ if findstart == '1':
                 return curColumn
             if curChar == '=':
                 return curColumn
+            if curChar == '(':
+                return curColumn
             curChar = line[(curColumn-2):curColumn]
             if curChar == '->':
                 return curColumn
