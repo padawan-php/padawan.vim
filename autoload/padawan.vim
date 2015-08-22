@@ -80,10 +80,10 @@ else:
     completions = client.GetCompletion(filepath, line, column, contents)
     completions = [
         {
-            'word': completion["name"].encode("ascii"),
-            'abbr': completion["menu"].encode("ascii"),
-            'info': completion["description"].encode("ascii"),
-            'menu': completion["signature"].encode('ascii')
+        'word': completion["name"].encode("ascii") if completion["name"] else '',
+        'abbr': completion["menu"].encode("ascii") if completion["menu"] else '',
+        'info': completion["description"].encode("ascii") if completion["description"] else '',
+        'menu': completion["signature"].encode('ascii') if completion["signature"] else ''
         }
         for completion in completions["completion"]
     ]
