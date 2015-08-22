@@ -153,7 +153,6 @@ class PadawanClient:
 
     def Generate(self, filepath):
         curPath = self.GetProjectRoot(filepath)
-        self.ComposerDumpAutoload(curPath)
         generatorCommand = server_path + '/bin/cli'
         stream = subprocess.Popen(
             'cd ' + curPath + ' && ' + generatorCommand + ' generate',
