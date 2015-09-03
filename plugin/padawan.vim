@@ -1,0 +1,6 @@
+command! -nargs=0 -bar PadawanStartServer call padawan#StartServer()
+command! -nargs=0 -bar PadawanStopServer call padawan#StopServer()
+command! -nargs=0 -bar PadawanRestartServer call padawan#RestartServer()
+command! -nargs=0 -bar PadawanGenerateIndex call padawan#GenerateIndex()
+command! -nargs=1 -bar PadawanAddPlugin call padawan#AddPlugin("<args>")
+command! -nargs=1 -bar PadawanRemovePlugin call padawan#RemovePlugin("<args>")

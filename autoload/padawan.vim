@@ -9,19 +9,22 @@ let did_padawan_autoload = 1
 let padawanPath = expand('<sfile>:p:h:h')
 
 if !exists('g:padawan#composer_command')
-    let g:padawan#composer_command = padawanPath . '/composer.phar'
+    let g:padawan#composer_command = 'composer.phar'
 endif
-if !exists('g:padawan#server_path')
-    let g:padawan#server_path = expand('<sfile>:p:h:h') . '/padawan.php'
+if !exists('g:padawan#server_command')
+    let g:padawan#server_command = 'padawan-server'
+endif
+if !exists('g:padawan#cli')
+    let g:padawan#cli = 'padawan'
 endif
 if !exists('g:padawan#server_addr')
     let g:padawan#server_addr = 'http://localhost:15155'
 endif
-if !exists('g:padawan#enabled')
-    let g:padawan#enabled = 1
-endif
 if !exists('g:padawan#timeout')
     let g:padawan#timeout = "0.15"
+endif
+if !exists('g:padawan#enabled')
+    let g:padawan#enabled = 1
 endif
 
 python << EOF
@@ -95,12 +98,6 @@ ENDPYTHON
 endfunction
 " }}}
 
-function! padawan#Enable()
-endfunction
-
-function! padawan#Disable()
-endfunction
-
 function! padawan#StartServer()
 python << EOF
 from padawan import client
@@ -157,10 +154,3 @@ pluginName = vim.eval("a:pluginName")
 client.RemovePlugin(pluginName)
 endpython
 endfunction
-
-command! -nargs=0 -bar PadawanStartServer call padawan#StartServer()
-command! -nargs=0 -bar PadawanStopServer call padawan#StopServer()
-command! -nargs=0 -bar PadawanRestartServer call padawan#RestartServer()
-command! -nargs=0 -bar PadawanGenerateIndex call padawan#GenerateIndex()
-command! -nargs=1 -bar PadawanAddPlugin call padawan#AddPlugin("<args>")
-command! -nargs=1 -bar PadawanRemovePlugin call padawan#RemovePlugin("<args>")

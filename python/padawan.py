@@ -8,7 +8,8 @@ import time
 import re
 
 server_addr = vim.eval('g:padawan#server_addr')
-server_path = vim.eval('g:padawan#server_path')
+server_command = vim.eval('g:padawan#server_command')
+cli = vim.eval('g:padawan#cli')
 composer = vim.eval('g:padawan#composer_command')
 timeout = float(vim.eval('g:padawan#timeout'))
 padawanPath = path.join(path.dirname(__file__), '..')
@@ -59,8 +60,9 @@ class PadawanClient:
         return completions
 
     def StartServer(self):
-        command = '{0}/bin/server.php > {0}/../logs/server.log'.format(
-            server_path
+        command = '{0} > {1}/logs/server.log'.format(
+            server_command,
+            padawanPath
         )
         subprocess.Popen(
             command,
@@ -81,13 +83,11 @@ class PadawanClient:
             self.StartServer()
 
     def AddPlugin(self, plugin):
-        composerCommand = composer + ' require '
-        generatorCommand = server_path + '/bin/cli'
+        composerCommand = composer + ' global require '
 
-        command = 'cd {0} && {1} {3} && {2} plugin add {3}'.format(
-            self.PadawanPHPPath(),
+        command = '{0} {2} && {1} plugin add {2}'.format(
             composerCommand,
-            generatorCommand,
+            cli,
             plugin
         )
 
@@ -111,14 +111,17 @@ class PadawanClient:
             self.RestartServer()
             vim.command("echom 'Plugin installed'")
         else:
+            if retcode == 127:
+                message = '''padawan command is not found in your $PATH. Please\
+ make sure you installed padawan.php package and\
+ configured your $PATH'''
+                vim.command("echom '{0}'".format(message))
             vim.command("echom 'Plugin installation failed'")
 
     def RemovePlugin(self, plugin):
-        composerCommand = composer + ' remove'
-        generatorCommand = server_path + '/bin/cli'
+        composerCommand = composer + ' global remove'
 
-        command = 'cd {0} && {1} {2}'.format(
-            self.PadawanPHPPath(),
+        command = '{0} {1}'.format(
             composerCommand,
             plugin
         )
@@ -140,9 +143,8 @@ class PadawanClient:
             time.sleep(0.005)
 
         subprocess.Popen(
-            'cd {0} && {1}'.format(
-                self.PadawanPHPPath(),
-                generatorCommand + ' plugin remove ' + plugin
+            '{0}'.format(
+                cli + ' plugin remove ' + plugin
             ),
             shell=True,
             stdout=subprocess.PIPE,
@@ -153,9 +155,8 @@ class PadawanClient:
 
     def Generate(self, filepath):
         curPath = self.GetProjectRoot(filepath)
-        generatorCommand = server_path + '/bin/cli'
         stream = subprocess.Popen(
-            'cd ' + curPath + ' && ' + generatorCommand + ' generate',
+            'cd ' + curPath + ' && ' + cli + ' generate',
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
@@ -192,7 +193,13 @@ class PadawanClient:
             time.sleep(0.005)
         time.sleep(0.005)
         if retcode > 0:
-            vim.command("echom 'Error occured, code: " + str(retcode) + "'")
+            if retcode == 127:
+                message = '''padawan command is not found in your $PATH. Please\
+ make sure you installed padawan.php package and\
+ configured your $PATH'''
+                vim.command("echom '{0}'".format(message))
+            else:
+                vim.command("echom 'Error occured, code: " + str(retcode) + "'")
             return
         self.RestartServer()
         barsStr = ''
@@ -201,15 +208,6 @@ class PadawanClient:
         barsStr = '[' + barsStr + ']'
         vim.command("redraw | echo 'Progress "+barsStr+" 100%'")
         vim.command("echom 'Index generated'")
-
-    def ComposerDumpAutoload(self, curProject):
-        composerCommand = composer + ' dumpautoload -o'
-        stream = subprocess.Popen(
-            'cd {0} && {1}'.format(
-                curProject,
-                composerCommand
-            ), shell=True)
-        stream.wait()
 
     def GetProjectRoot(self, filepath):
         curPath = path.dirname(filepath)
@@ -222,8 +220,5 @@ class PadawanClient:
             curPath = path.dirname(filepath)
 
         return curPath
-
-    def PadawanPHPPath(self):
-        return padawanPath + '/padawan.php/'
 
 client = PadawanClient()
