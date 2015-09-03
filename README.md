@@ -30,18 +30,18 @@ Padawan.vim requires:
 Installation
 ------------
 
-Install Padawan.vim using any of the popular plugin managers like Pathogen,
-Vundle, Neobundle or Plug.
+You can install Padawan.vim using any of the popular plugin managers like
+Pathogen, Vundle, Neobundle or Plug.
 
-1. Make sure you have installed padawan.php package:
+- Make sure you have installed padawan.php package:
 ```bash
 $ composer global require mkusher/padawan
 ```
-2. Configure $PATH variable. You may add $PATH to your vimrc:
+- Configure $PATH variable. You may add $PATH to your vimrc:
 ```vim
 let $PATH=$PATH . ':' . expand('~/.composer/vendor/bin')
 ```
-3. Configure composer command:
+- Configure composer command:
 ```vim
 let g:padawan#composer_command = "php /path/to/composer.phar"
 ```
