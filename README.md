@@ -141,6 +141,12 @@ example sets it to 100 ms:
 ```vim
 let g:padawan#timeout = 0.1
 ```
+If you don't want to use `composer global` for installing padawan, then you
+should configure commands for running padawan:
+```vim
+let g:padawan#cli = '/path/to/padawan.php/bin/padawan'
+let g:padawan#server_command = '/path/to/padawan.php/bin/padawan-server'
+```
 
 Vim functions
 -------------

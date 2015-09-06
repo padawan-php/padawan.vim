@@ -14,19 +14,83 @@ composer = vim.eval('g:padawan#composer_command')
 timeout = float(vim.eval('g:padawan#timeout'))
 padawanPath = path.join(path.dirname(__file__), '..')
 
+class Server:
+    def start(self):
+        command = '{0} > {1}/logs/server.log'.format(
+            server_command,
+            padawanPath
+        )
+        subprocess.Popen(
+            command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+        )
+    def stop(self):
+        try:
+            self.sendRequest('kill', {})
+            return True
+        except Exception:
+            return False
+    def restart(self):
+        if self.stop():
+            self.start()
+    def sendRequest(self, command, params, data=''):
+        addr = server_addr + "/"+command+"?" + urllib.urlencode(params)
+        response = urllib2.urlopen(
+            addr,
+            urllib.quote_plus(data),
+            timeout
+        )
+        data = json.load(response)
+        if "error" in data:
+            raise ValueError(data["error"])
+        return data
+
+class Editor:
+    def prepare(self, message):
+        return message.replace("'", "''")
+    def log(self, message):
+        vim.command("echo '%s'" % self.prepare(message))
+    def notify(self, message):
+        vim.command("echom '%s'" % self.prepare(message))
+    def progress(self, progress):
+        bars = int(progress / 5)
+        barsStr = ''
+        for i in range(20):
+            if i < bars:
+                barsStr += '='
+            else:
+                barsStr += ' '
+        barsStr = '[' + barsStr + ']'
+
+        vim.command(
+            "redraw | echo 'Progress "+barsStr+' '+str(progress)+"%'"
+        )
+        return
+    def error(self, error):
+        self.notify(error)
+    def callAfter(self, timeout, callback):
+        time.sleep(timeout)
+        while callback():
+            time.sleep(timeout)
+
+server = Server()
+editor = Editor()
+pathError = '''padawan command is not found in your $PATH. Please\
+make sure you installed padawan.php package and\
+configured your $PATH'''
 
 class PadawanClient:
-    server_process = 0
-
     def GetCompletion(self, filepath, line_num, column_num, contents):
         curPath = self.GetProjectRoot(filepath)
 
         params = {
-            'filepath': filepath.replace(curPath, ""),
-            'line': line_num,
-            'column': column_num,
-            'path': curPath
-        }
+                'filepath': filepath.replace(curPath, ""),
+                'line': line_num,
+                'column': column_num,
+                'path': curPath
+                }
         result = self.DoRequest('complete', params, contents)
 
         if not result:
@@ -39,181 +103,146 @@ class PadawanClient:
 
     def DoRequest(self, command, params, data=''):
         try:
-            return self.SendRequest(command, params, data)
+            return server.sendRequest(command, params, data)
         except urllib2.URLError:
-            vim.command('echo "Padawan.php is not running"')
+            editor.error("Padawan.php is not running")
         except Exception as e:
-            vim.command('echom "Error occured {0}"'.format(e))
+            editor.error("Error occured {0}".format(e.message))
 
         return False
-
-    def SendRequest(self, command, params, data=''):
-        addr = server_addr + "/"+command+"?" + urllib.urlencode(params)
-        response = urllib2.urlopen(
-            addr,
-            urllib.quote_plus(data),
-            timeout
-        )
-        completions = json.load(response)
-        if "error" in completions:
-            raise ValueError(completions["error"])
-        return completions
-
-    def StartServer(self):
-        command = '{0} > {1}/logs/server.log'.format(
-            server_command,
-            padawanPath
-        )
-        subprocess.Popen(
-            command,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
-        )
-
-    def StopServer(self):
-        try:
-            self.SendRequest('kill', {})
-            return True
-        except Exception:
-            return False
-
-    def RestartServer(self):
-        if self.StopServer():
-            self.StartServer()
 
     def AddPlugin(self, plugin):
         composerCommand = composer + ' global require '
 
         command = '{0} {2} && {1} plugin add {2}'.format(
-            composerCommand,
-            cli,
-            plugin
-        )
+                composerCommand,
+                cli,
+                plugin
+                )
 
         stream = subprocess.Popen(
-            command,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
-        )
+                command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
+                )
 
-        while True:
+        def OnAdd(retcode):
+            if not retcode:
+                server.restart()
+                editor.notify("Plugin installed")
+            else:
+                if retcode == 127:
+                    editor.error(pathError)
+                editor.error("Plugin installation failed")
+
+        def LogAdding():
             retcode = stream.poll()
             if retcode is not None:
-                break
+                return OnAdd(retcode)
 
             line = stream.stdout.readline()
-            vim.command("echo '%s'" % line.replace("'", "''"))
-            time.sleep(0.005)
+            editor.log(line)
+            return True
 
-        if not retcode:
-            self.RestartServer()
-            vim.command("echom 'Plugin installed'")
-        else:
-            if retcode == 127:
-                message = '''padawan command is not found in your $PATH. Please\
- make sure you installed padawan.php package and\
- configured your $PATH'''
-                vim.command("echom '{0}'".format(message))
-            vim.command("echom 'Plugin installation failed'")
+        editor.callAfter(1e-4, LogAdding)
+
 
     def RemovePlugin(self, plugin):
         composerCommand = composer + ' global remove'
 
         command = '{0} {1}'.format(
-            composerCommand,
-            plugin
-        )
+                composerCommand,
+                plugin
+                )
 
         stream = subprocess.Popen(
-            command,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
-        )
+                command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
+                )
 
-        while True:
+        def onRemoved():
+            subprocess.Popen(
+                    '{0}'.format(
+                        cli + ' plugin remove ' + plugin
+                        ),
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT
+                    ).wait()
+            self.RestartServer()
+            return editor.notify("Plugin removed")
+
+        def LogRemoving():
             retcode = stream.poll()
             if retcode is not None:
-                break
+                return onRemoved()
 
             line = stream.stdout.readline()
-            vim.command("echo '%s'" % line)
-            time.sleep(0.005)
+            editor.log(line)
+            return True
 
-        subprocess.Popen(
-            '{0}'.format(
-                cli + ' plugin remove ' + plugin
-            ),
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
-        ).wait()
-        self.RestartServer()
-        vim.command("echom 'Plugin removed'")
+        editor.callAfter(1e-4, LogRemoving)
+
 
     def Generate(self, filepath):
         curPath = self.GetProjectRoot(filepath)
         stream = subprocess.Popen(
-            'cd ' + curPath + ' && ' + cli + ' generate',
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
-        )
-        while True:
+                'cd ' + curPath + ' && ' + cli + ' generate',
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
+                )
+
+        def onGenerationEnd(retcode):
+            if retcode > 0:
+                if retcode == 127:
+                    editor.error(pathError)
+                else:
+                    editor.error("Error occured, code: {0}".format(str(retcode)))
+                return
+            server.restart()
+            editor.progress(100)
+            editor.notify("Index generated")
+
+        def ProcessGenerationPoll():
             retcode = stream.poll()
             if retcode is not None:
-                break
+                onGenerationEnd(retcode)
+                return
             line = stream.stdout.readline()
             errorMatch = re.search('Error: (.*)', line)
             if errorMatch is not None:
                 retcode = 1
-                vim.command("echom '{0}'".format(
+                editor.error("{0}".format(
                     errorMatch.group(1).replace("'", "''")
-                ))
-                break
+                    ))
+                return
             match = re.search('Progress: ([0-9]+)', line)
             if match is None:
-                continue
+                return True
             progress = int(match.group(1))
+            editor.progress(progress)
+            return True
 
-            bars = int(progress / 5)
-            barsStr = ''
-            for i in range(20):
-                if i < bars:
-                    barsStr += '='
-                else:
-                    barsStr += ' '
-            barsStr = '[' + barsStr + ']'
+        editor.callAfter(1e-4, ProcessGenerationPoll)
 
-            vim.command(
-                "redraw | echo 'Progress "+barsStr+' '+str(progress)+"%'"
-            )
-            time.sleep(0.005)
-        time.sleep(0.005)
-        if retcode > 0:
-            if retcode == 127:
-                message = '''padawan command is not found in your $PATH. Please\
- make sure you installed padawan.php package and\
- configured your $PATH'''
-                vim.command("echom '{0}'".format(message))
-            else:
-                vim.command("echom 'Error occured, code: " + str(retcode) + "'")
-            return
-        self.RestartServer()
-        barsStr = ''
-        for i in range(20):
-            barsStr += '='
-        barsStr = '[' + barsStr + ']'
-        vim.command("redraw | echo 'Progress "+barsStr+" 100%'")
-        vim.command("echom 'Index generated'")
+    def StartServer(self):
+        server.start()
+
+    def StopServer(self):
+        server.stop()
+
+    def RestartServer(self):
+        server.restart()
 
     def GetProjectRoot(self, filepath):
         curPath = path.dirname(filepath)
         while curPath != '/' and not path.exists(
-            path.join(curPath, 'composer.json')
-        ):
+                path.join(curPath, 'composer.json')
+                ):
             curPath = path.dirname(curPath)
 
         if curPath == '/':
