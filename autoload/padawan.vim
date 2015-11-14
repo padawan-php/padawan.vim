@@ -43,7 +43,19 @@ function! padawan#Complete(findstart, base) " {{{
 python << ENDPYTHON
 
 import vim
-from padawan import client
+from padawan import client, editor
+
+def createDictionaryStr(completions):
+    dic = ", ".join([
+        "{'word': '%s', 'abbr': '%s', 'info': '%s', 'menu': '%s'}" % (
+            editor.prepare(completion["word"]),
+            editor.prepare(completion["abbr"]),
+            editor.prepare(completion["info"]),
+            editor.prepare(completion["menu"])
+            )
+        for completion in completions
+    ])
+    return dic
 
 findstart = vim.eval('a:findstart')
 column = vim.eval("col('.')")
@@ -92,7 +104,7 @@ else:
         }
         for completion in completions["completion"]
     ]
-    vim.command(("let completions = %s" % completions).replace('\\\\', '\\'))
+    vim.command(("let completions = [%s]" % createDictionaryStr(completions)).replace('\\\\', '\\'))
 ENDPYTHON
     return completions
 endfunction
