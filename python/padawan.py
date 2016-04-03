@@ -1,11 +1,10 @@
 import vim
 from os import path
-import urllib2
-import urllib
 import json
 import subprocess
 import time
 import re
+import socket
 
 server_addr = vim.eval('g:padawan#server_addr')
 server_command = vim.eval('g:padawan#server_command')
@@ -14,7 +13,16 @@ composer = vim.eval('g:padawan#composer_command')
 timeout = float(vim.eval('g:padawan#timeout'))
 padawanPath = path.join(path.dirname(__file__), '..')
 
+BUFFER_SIZE = 1024
+
 class Server:
+    def __init__(self):
+        fullAddr = server_addr.split(":")
+        self.addr = (
+            fullAddr[0],
+            int(fullAddr[1])
+        )
+
     def start(self):
         command = '{0} > {1}/logs/server.log'.format(
             server_command,
@@ -26,34 +34,51 @@ class Server:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
         )
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
     def stop(self):
         try:
             self.sendRequest('kill', {})
             return True
         except Exception:
             return False
+
     def restart(self):
         if self.stop():
             self.start()
-    def sendRequest(self, command, params, data=''):
-        addr = server_addr + "/"+command+"?" + urllib.urlencode(params)
-        response = urllib2.urlopen(
-            addr,
-            urllib.quote_plus(data),
-            timeout
-        )
-        data = json.load(response)
-        if "error" in data:
-            raise ValueError(data["error"])
-        return data
+
+    def sendRequest(self, command, params):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(self.addr)
+        s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        requestData = json.dumps({
+            'command': command,
+            'params': params
+        })
+        s.send(requestData)
+        response = ""
+        while 1:
+            chunk = s.recv(BUFFER_SIZE)
+            if not chunk:
+                break
+            response += chunk
+        result = json.loads(response)
+        if "error" in result:
+            raise Exception(result["error"])
+        return result
+
 
 class Editor:
+
     def prepare(self, message):
         return message.replace("'", "''")
+
     def log(self, message):
         vim.command("echo '%s'" % self.prepare(message))
+
     def notify(self, message):
         vim.command("echom '%s'" % self.prepare(message))
+
     def progress(self, progress):
         bars = int(progress / 5)
         barsStr = ''
@@ -68,8 +93,10 @@ class Editor:
             "redraw | echo 'Progress "+barsStr+' '+str(progress)+"%'"
         )
         return
+
     def error(self, error):
         self.notify(error)
+
     def callAfter(self, timeout, callback):
         time.sleep(timeout)
         while callback():
@@ -81,16 +108,18 @@ pathError = '''padawan command is not found in your $PATH. Please\
 make sure you installed padawan.php package and\
 configured your $PATH'''
 
+
 class PadawanClient:
     def GetCompletion(self, filepath, line_num, column_num, contents):
         curPath = self.GetProjectRoot(filepath)
 
         params = {
-                'filepath': filepath.replace(curPath, ""),
-                'line': line_num,
-                'column': column_num,
-                'path': curPath
-                }
+            'filepath': filepath.replace(curPath, ""),
+            'line': line_num,
+            'column': column_num,
+            'path': curPath,
+            'data': contents
+            }
         result = self.DoRequest('complete', params, contents)
 
         if not result:
@@ -101,11 +130,15 @@ class PadawanClient:
     def SaveIndex(self, filepath):
         return self.DoRequest('save', {'filepath': filepath})
 
-    def DoRequest(self, command, params, data=''):
+    def DoRequest(self, command, params, data='', tries=1):
         try:
-            return server.sendRequest(command, params, data)
-        except urllib2.URLError:
-            editor.error("Padawan.php is not running")
+            return server.sendRequest(command, params)
+        except socket.error as e:
+            if tries > 3:
+                editor.error("Padawan.php is not running")
+            else:
+                self.StartServer()
+                return self.DoRequest(command, params, tries+1)
         except Exception as e:
             editor.error("Error occured {0}".format(e.message))
 

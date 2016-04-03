@@ -18,7 +18,7 @@ if !exists('g:padawan#cli')
     let g:padawan#cli = 'padawan'
 endif
 if !exists('g:padawan#server_addr')
-    let g:padawan#server_addr = 'http://localhost:15155'
+    let g:padawan#server_addr = 'localhost:15155'
 endif
 if !exists('g:padawan#timeout')
     let g:padawan#timeout = "0.15"
@@ -40,6 +40,9 @@ sys.path.insert(0, lib_path)
 EOF
 
 function! padawan#Complete(findstart, base) " {{{
+    if g:padawan#enabled == 0
+        return -2
+    endif
 python << ENDPYTHON
 
 import vim
@@ -109,6 +112,14 @@ ENDPYTHON
     return completions
 endfunction
 " }}}
+
+function! padawan#Disable()
+    let g:padawan#enabled = 0
+endfunction
+
+function! padawan#Enable()
+    let g:padawan#enabled = 1
+endfunction
 
 function! padawan#StartServer()
 python << EOF
