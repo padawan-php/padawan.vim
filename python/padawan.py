@@ -127,6 +127,12 @@ class PadawanClient:
 
         return result
 
+    def GetClassesList(self, cwd):
+        params = {
+            'path': cwd
+            }
+        return self.DoRequest("list", params)
+
     def SaveIndex(self, filepath):
         return self.DoRequest('save', {'filepath': filepath})
 

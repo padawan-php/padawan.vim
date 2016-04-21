@@ -6,7 +6,7 @@ if exists('did_padawan_autoload')
     finish
 endif
 let did_padawan_autoload = 1
-let padawanPath = expand('<sfile>:p:h:h')
+let g:padawanPath = expand('<sfile>:p:h:h')
 
 if !exists('g:padawan#composer_command')
     let g:padawan#composer_command = 'composer.phar'
@@ -33,7 +33,7 @@ import vim
 import sys
 import os
 
-padawanPath = vim.eval('padawanPath')
+padawanPath = vim.eval('g:padawanPath')
 lib_path = os.path.join(padawanPath, 'python')
 sys.path.insert(0, lib_path)
 
