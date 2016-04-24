@@ -9,6 +9,7 @@ This plugin includes:
 - Omnifunc
 - Commands for index generation and index saving
 - Commands for starting, stopping and restarting the server
+- Source for Unite.vim to search files by classes
 
 ### Demo video
 
