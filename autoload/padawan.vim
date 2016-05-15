@@ -21,7 +21,7 @@ if !exists('g:padawan#server_addr')
     let g:padawan#server_addr = 'localhost:15155'
 endif
 if !exists('g:padawan#timeout')
-    let g:padawan#timeout = "0.15"
+    let g:padawan#timeout = "0.075"
 endif
 if !exists('g:padawan#enabled')
     let g:padawan#enabled = 1
@@ -74,15 +74,15 @@ if findstart == '1':
         while curColumn > 0:
             curChar = line[curColumn-1]
             if curChar == ' ':
-                return curColumn
+                return column
             if curChar == '\\':
                 return curColumn
             if curChar == '$':
                 return curColumn
             if curChar == ';':
-                return curColumn
+                return column
             if curChar == '=':
-                return curColumn
+                return column
             if curChar == '(':
                 return curColumn
             curChar = line[(curColumn-2):curColumn]

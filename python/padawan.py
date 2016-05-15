@@ -34,7 +34,6 @@ class Server:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
         )
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def stop(self):
         try:
@@ -51,6 +50,7 @@ class Server:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(self.addr)
         s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        s.settimeout(timeout)
         requestData = json.dumps({
             'command': command,
             'params': params
@@ -120,7 +120,7 @@ class PadawanClient:
             'path': curPath,
             'data': contents
             }
-        result = self.DoRequest('complete', params, contents)
+        result = self.DoRequest('complete', params)
 
         if not result:
             return {"completion": []}
@@ -136,12 +136,14 @@ class PadawanClient:
     def SaveIndex(self, filepath):
         return self.DoRequest('save', {'filepath': filepath})
 
-    def DoRequest(self, command, params, data='', tries=1):
+    def DoRequest(self, command, params, tries=1):
         try:
             return server.sendRequest(command, params)
+        except socket.timeout as e:
+            editor.error("Request to padawan.php took too long")
         except socket.error as e:
             if tries > 3:
-                editor.error("Padawan.php is not running")
+                editor.error("Padawan.php is not running({0})".format(e.strerror))
             else:
                 self.StartServer()
                 return self.DoRequest(command, params, tries+1)
