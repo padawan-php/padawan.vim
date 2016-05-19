@@ -151,6 +151,15 @@ client.SaveIndex(filepath)
 EOF
 endfunction
 
+function! padawan#UpdateIndex()
+python << endpython
+import vim
+from padawan import client
+filepath = vim.eval("expand('%:p')")
+client.UpdateIndex(filepath)
+endpython
+endfunction
+
 function! padawan#GenerateIndex()
 python << endpython
 import vim

@@ -127,6 +127,15 @@ class PadawanClient:
 
         return result
 
+
+    def UpdateIndex(self, filepath):
+        projectRoot = self.GetProjectRoot(filepath)
+        params = {
+            'path': projectRoot
+            }
+        self.DoRequest('update', params)
+
+
     def GetClassesList(self, cwd):
         params = {
             'path': cwd
