@@ -6,7 +6,7 @@ if exists('did_padawan_autoload')
     finish
 endif
 let did_padawan_autoload = 1
-let padawanPath = expand('<sfile>:p:h:h')
+let g:padawanPath = expand('<sfile>:p:h:h')
 
 if !exists('g:padawan#composer_command')
     let g:padawan#composer_command = 'composer.phar'
@@ -21,7 +21,7 @@ if !exists('g:padawan#server_addr')
     let g:padawan#server_addr = 'http://localhost:15155'
 endif
 if !exists('g:padawan#timeout')
-    let g:padawan#timeout = "0.15"
+    let g:padawan#timeout = "0.75"
 endif
 if !exists('g:padawan#enabled')
     let g:padawan#enabled = 1
@@ -33,13 +33,16 @@ import vim
 import sys
 import os
 
-padawanPath = vim.eval('padawanPath')
+padawanPath = vim.eval('g:padawanPath')
 lib_path = os.path.join(padawanPath, 'python')
 sys.path.insert(0, lib_path)
 
 EOF
 
 function! padawan#Complete(findstart, base) " {{{
+    if g:padawan#enabled == 0
+        return -2
+    endif
 python << ENDPYTHON
 
 import vim
@@ -71,15 +74,15 @@ if findstart == '1':
         while curColumn > 0:
             curChar = line[curColumn-1]
             if curChar == ' ':
-                return curColumn
+                return column
             if curChar == '\\':
                 return curColumn
             if curChar == '$':
                 return curColumn
             if curChar == ';':
-                return curColumn
+                return column
             if curChar == '=':
-                return curColumn
+                return column
             if curChar == '(':
                 return curColumn
             curChar = line[(curColumn-2):curColumn]
@@ -110,6 +113,14 @@ ENDPYTHON
 endfunction
 " }}}
 
+function! padawan#Disable()
+    let g:padawan#enabled = 0
+endfunction
+
+function! padawan#Enable()
+    let g:padawan#enabled = 1
+endfunction
+
 function! padawan#StartServer()
 python << EOF
 from padawan import client
@@ -138,6 +149,15 @@ from padawan import client
 filepath = vim.eval("expand('%:p')")
 client.SaveIndex(filepath)
 EOF
+endfunction
+
+function! padawan#UpdateIndex()
+python << endpython
+import vim
+from padawan import client
+filepath = vim.eval("expand('%:p')")
+client.UpdateIndex(filepath)
+endpython
 endfunction
 
 function! padawan#GenerateIndex()

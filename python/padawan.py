@@ -37,10 +37,12 @@ class Server:
             self.start()
     def sendRequest(self, command, params, data=''):
         addr = server_addr + "/"+command+"?" + urllib.urlencode(params)
+        request = urllib2.Request(addr, headers={
+            "Content-Type": "plain/text"
+        }, data = urllib.quote_plus(data))
         response = urllib2.urlopen(
-            addr,
-            urllib.quote_plus(data),
-            timeout
+            request,
+            timeout=timeout
         )
         data = json.load(response)
         if "error" in data:
@@ -107,7 +109,7 @@ class PadawanClient:
         except urllib2.URLError:
             editor.error("Padawan.php is not running")
         except Exception as e:
-            editor.error("Error occured {0}".format(e.message))
+            editor.error("Error occured {0}".format(e))
 
         return False
 
@@ -186,6 +188,19 @@ class PadawanClient:
 
         editor.callAfter(1e-4, LogRemoving)
 
+    def UpdateIndex(self, filepath):
+        projectRoot = self.GetProjectRoot(filepath)
+        params = {
+            'path': projectRoot
+            }
+        self.DoRequest('update', params)
+
+
+    def GetClassesList(self, cwd):
+        params = {
+            'path': cwd
+            }
+        return self.DoRequest("list", params)
 
     def Generate(self, filepath):
         curPath = self.GetProjectRoot(filepath)
@@ -228,6 +243,7 @@ class PadawanClient:
             return True
 
         editor.callAfter(1e-4, ProcessGenerationPoll)
+
 
     def StartServer(self):
         server.start()
