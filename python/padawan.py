@@ -1,7 +1,15 @@
 import vim
 from os import path
-import urllib2
-import urllib
+try:
+    from urllib.parse import urlencode
+    from urllib.request import urlopen
+    from urllib.request import Request
+    from urllib.request import URLError
+except ImportError:
+    from urllib import urlencode
+    from urllib2 import urlopen
+    from urllib2 import Request
+    from urllib2 import URLError
 import json
 import subprocess
 import time
