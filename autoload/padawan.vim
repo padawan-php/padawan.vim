@@ -27,7 +27,7 @@ if !exists('g:padawan#enabled')
     let g:padawan#enabled = 1
 endif
 
-python << EOF
+python3 << EOF
 
 import vim
 import sys
@@ -43,7 +43,7 @@ function! padawan#Complete(findstart, base) " {{{
     if g:padawan#enabled == 0
         return -2
     endif
-python << ENDPYTHON
+python3 << ENDPYTHON
 
 import vim
 from padawan import client, editor
@@ -122,28 +122,28 @@ function! padawan#Enable()
 endfunction
 
 function! padawan#StartServer()
-python << EOF
+python3 << EOF
 from padawan import client
 client.StartServer()
 EOF
 endfunction
 
 function! padawan#StopServer()
-python << EOF
+python3 << EOF
 from padawan import client
 client.StopServer()
 EOF
 endfunction
 
 function! padawan#RestartServer()
-python << EOF
+python3 << EOF
 from padawan import client
 client.RestartServer()
 EOF
 endfunction
 
 function! padawan#SaveIndex()
-python << EOF
+python3 << EOF
 import vim
 from padawan import client
 filepath = vim.eval("expand('%:p')")
@@ -152,7 +152,7 @@ EOF
 endfunction
 
 function! padawan#UpdateIndex()
-python << endpython
+python3 << endpython
 import vim
 from padawan import client
 filepath = vim.eval("expand('%:p')")
@@ -161,7 +161,7 @@ endpython
 endfunction
 
 function! padawan#GenerateIndex()
-python << endpython
+python3 << endpython
 import vim
 from padawan import client
 filepath = vim.eval("expand('%:p')")
@@ -170,7 +170,7 @@ endpython
 endfunction
 
 function! padawan#AddPlugin(pluginName)
-python << endpython
+python3 << endpython
 import vim
 from padawan import client
 pluginName = vim.eval("a:pluginName")
@@ -179,7 +179,7 @@ endpython
 endfunction
 
 function! padawan#RemovePlugin(pluginName)
-python << endpython
+python3 << endpython
 import vim
 from padawan import client
 pluginName = vim.eval("a:pluginName")
