@@ -48,7 +48,7 @@ class Server:
         request = Request(addr, headers={
             "Content-Type": "plain/text"
         }, data = quote_plus(data))
-        response = urllib2.urlopen(
+        response = urlopen(
             request,
             timeout=timeout
         )
