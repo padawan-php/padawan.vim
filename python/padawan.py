@@ -235,7 +235,7 @@ class PadawanClient:
             if retcode is not None:
                 onGenerationEnd(retcode)
                 return
-            line = stream.stdout.readline()
+            line = str(stream.stdout.readline())
             errorMatch = re.search('Error: (.*)', line)
             if errorMatch is not None:
                 retcode = 1
