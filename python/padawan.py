@@ -44,10 +44,10 @@ class Server:
         if self.stop():
             self.start()
     def sendRequest(self, command, params, data=''):
-        addr = server_addr + "/"+command+"?" + urllib.urlencode(params)
-        request = urllib2.Request(addr, headers={
+        addr = server_addr + "/"+command+"?" + urlencode(params)
+        request = Request(addr, headers={
             "Content-Type": "plain/text"
-        }, data = urllib.quote_plus(data))
+        }, data = quote_plus(data))
         response = urllib2.urlopen(
             request,
             timeout=timeout
@@ -114,7 +114,7 @@ class PadawanClient:
     def DoRequest(self, command, params, data=''):
         try:
             return server.sendRequest(command, params, data)
-        except urllib2.URLError:
+        except URLError:
             editor.error("Padawan.php is not running")
         except Exception as e:
             editor.error("Error occured {0}".format(e))
