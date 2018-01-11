@@ -1,15 +1,9 @@
 import vim
 from os import path
-try:
-    from urllib.parse import urlencode
-    from urllib.request import urlopen
-    from urllib.request import Request
-    from urllib.request import URLError
-except ImportError:
-    from urllib import urlencode
-    from urllib2 import urlopen
-    from urllib2 import Request
-    from urllib2 import URLError
+from urllib.parse import urlencode, quote_plus
+from urllib.request import urlopen
+from urllib.request import Request
+from urllib.request import URLError
 import json
 import subprocess
 import time
@@ -47,7 +41,7 @@ class Server:
         addr = server_addr + "/"+command+"?" + urlencode(params)
         request = Request(addr, headers={
             "Content-Type": "plain/text"
-        }, data = urlencode(data).encode("utf-8"))
+        }, data = quote_plus(data).encode("utf-8"))
         response = urlopen(
             request,
             timeout=timeout
@@ -117,7 +111,7 @@ class PadawanClient:
         except URLError:
             editor.error("Padawan.php is not running")
         except Exception as e:
-            editor.error("Error occured {0}".format(e))
+            editor.error("Error occured {0}".format(e.errno, e.strerror))
 
         return False
 
