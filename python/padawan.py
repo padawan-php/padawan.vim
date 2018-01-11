@@ -47,7 +47,7 @@ class Server:
         addr = server_addr + "/"+command+"?" + urlencode(params)
         request = Request(addr, headers={
             "Content-Type": "plain/text"
-        }, data = quote_plus(data))
+        }, data = urlencode(data).encode("utf-8"))
         response = urlopen(
             request,
             timeout=timeout
@@ -151,7 +151,7 @@ class PadawanClient:
             if retcode is not None:
                 return OnAdd(retcode)
 
-            line = stream.stdout.readline()
+            line = str(stream.stdout.readline())
             editor.log(line)
             return True
 
@@ -190,7 +190,7 @@ class PadawanClient:
             if retcode is not None:
                 return onRemoved()
 
-            line = stream.stdout.readline()
+            line = str(stream.stdout.readline())
             editor.log(line)
             return True
 
