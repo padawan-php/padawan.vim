@@ -53,7 +53,7 @@ class Server:
 
 class Editor:
     def prepare(self, message):
-        return message.replace("'", "''")
+        return message.encode().replace("'", "''")
     def log(self, message):
         vim.command("echo '%s'" % self.prepare(message))
     def notify(self, message):
