@@ -38,7 +38,7 @@ class Server:
         if self.stop():
             self.start()
     def sendRequest(self, command, params, data=''):
-        addr = server_addr + "/"+command+"?" + urlencode(params)
+        addr = str(server_addr) + "/"+str(command)+"?" + urlencode(params)
         request = Request(addr, headers={
             "Content-Type": "plain/text"
         }, data = quote_plus(data).encode("utf-8"))
