@@ -53,7 +53,9 @@ class Server:
 
 class Editor:
     def prepare(self, message):
-        return message.encode().replace("'", "''")
+        if message != '' and hasattr(message, 'encode'):
+            message = message.encode().replace("'", "''")
+        return message
     def log(self, message):
         vim.command("echo '%s'" % self.prepare(message))
     def notify(self, message):
