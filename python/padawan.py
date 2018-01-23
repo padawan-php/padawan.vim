@@ -1,15 +1,9 @@
 import vim
 from os import path
-try:
-    from urllib.parse import urlencode
-    from urllib.request import urlopen
-    from urllib.request import Request
-    from urllib.request import URLError
-except ImportError:
-    from urllib import urlencode
-    from urllib2 import urlopen
-    from urllib2 import Request
-    from urllib2 import URLError
+from urllib.parse import urlencode, quote_plus
+from urllib.request import urlopen
+from urllib.request import Request
+from urllib.request import URLError
 import json
 import subprocess
 import time
@@ -44,11 +38,11 @@ class Server:
         if self.stop():
             self.start()
     def sendRequest(self, command, params, data=''):
-        addr = server_addr + "/"+command+"?" + urllib.urlencode(params)
-        request = urllib2.Request(addr, headers={
+        addr = str(server_addr) + "/"+str(command)+"?" + urlencode(params)
+        request = Request(addr, headers={
             "Content-Type": "plain/text"
-        }, data = urllib.quote_plus(data))
-        response = urllib2.urlopen(
+        }, data = quote_plus(data).encode("utf-8"))
+        response = urlopen(
             request,
             timeout=timeout
         )
@@ -59,7 +53,7 @@ class Server:
 
 class Editor:
     def prepare(self, message):
-        return message.replace("'", "''")
+        return message.encode().replace("'", "''")
     def log(self, message):
         vim.command("echo '%s'" % self.prepare(message))
     def notify(self, message):
@@ -114,10 +108,10 @@ class PadawanClient:
     def DoRequest(self, command, params, data=''):
         try:
             return server.sendRequest(command, params, data)
-        except urllib2.URLError:
+        except URLError:
             editor.error("Padawan.php is not running")
         except Exception as e:
-            editor.error("Error occured {0}".format(e))
+            editor.error("Error occured {0}".format(e.errno, e.strerror))
 
         return False
 
@@ -151,7 +145,7 @@ class PadawanClient:
             if retcode is not None:
                 return OnAdd(retcode)
 
-            line = stream.stdout.readline()
+            line = str(stream.stdout.readline())
             editor.log(line)
             return True
 
@@ -190,7 +184,7 @@ class PadawanClient:
             if retcode is not None:
                 return onRemoved()
 
-            line = stream.stdout.readline()
+            line = str(stream.stdout.readline())
             editor.log(line)
             return True
 
@@ -235,7 +229,7 @@ class PadawanClient:
             if retcode is not None:
                 onGenerationEnd(retcode)
                 return
-            line = stream.stdout.readline()
+            line = str(stream.stdout.readline())
             errorMatch = re.search('Error: (.*)', line)
             if errorMatch is not None:
                 retcode = 1
