@@ -58,6 +58,7 @@ def createDictionaryStr(completions):
             )
         for completion in completions
     ])
+    dic = str(dic).replace("'b'","'").replace(" ''"," '").replace("''}","'}").replace("'',","',").replace(" ',"," '',")
     return dic
 
 findstart = vim.eval('a:findstart')
