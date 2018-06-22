@@ -50,7 +50,7 @@ from padawan import client, editor
 
 def createDictionaryStr(completions):
     dic = ", ".join([
-        "{'word': '%s', 'abbr': '%s', 'info': '%s', 'menu': '%s'}" % (
+        "{'word': '%s', 'abbr': '%s', 'info': '%s', 'menu': '%s'}".replace("'","\"") % (
             editor.prepare(completion["word"]),
             editor.prepare(completion["abbr"]),
             editor.prepare(completion["info"]),
@@ -58,6 +58,7 @@ def createDictionaryStr(completions):
             )
         for completion in completions
     ])
+    dic = str(dic).replace("'\\n',","',")
     return dic
 
 findstart = vim.eval('a:findstart')
